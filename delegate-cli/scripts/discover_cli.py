@@ -12,6 +12,7 @@ DEFAULT_CANDIDATES = (
     "codex",
     "claude",
     "cursor",
+    "agent",
     "gemini",
     "opencode",
     "aider",

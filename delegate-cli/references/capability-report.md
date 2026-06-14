@@ -32,6 +32,6 @@ If the help output is ambiguous, summarize the uncertainty and choose the safest
 - `missing`: candidate names not found on `PATH`.
 - `selection_guidance`: instruction for the host agent to ask the user which discovered CLI(s) to use unless the task names one.
 
-Default scan candidates are intentionally broad and non-authoritative: `codex`, `claude`, `cursor`, `gemini`, `opencode`, `aider`, `goose`, `qwen`, and `amp`. Add extra names with repeated `--candidate <name>` flags when a user has a different CLI installed.
+Default scan candidates are intentionally broad and non-authoritative: `codex`, `claude`, `cursor`, `agent`, `gemini`, `opencode`, `aider`, `goose`, `qwen`, and `amp`. Cursor Agent may be installed as `agent` even when `cursor --help` reports only IDE setup guidance. Add extra names with repeated `--candidate <name>` flags when a user has a different CLI installed.
 
 When multiple CLIs are found, present a compact choice to the user with name, version when available, and relevant inferred capabilities. Do not assume that the highest-profile CLI is the right one for the task.
