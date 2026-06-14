@@ -1,6 +1,6 @@
 # Capability Report Reference
 
-`discover_cli.py` emits a JSON object with these fields:
+`discover_cli.py <name>` emits a JSON object with these fields:
 
 - `name`: command name requested by Codex.
 - `found`: whether the command exists on `PATH`.
@@ -21,3 +21,17 @@ Use these interpretation rules:
 - `mentions_noninteractive: true`: prefer the documented noninteractive mode over terminal automation.
 
 If the help output is ambiguous, summarize the uncertainty and choose the safest bounded invocation that can produce useful output.
+
+
+## Scan Reports
+
+`discover_cli.py --scan` emits:
+
+- `candidates`: discovery reports for every candidate name checked.
+- `found`: discovered CLIs available on `PATH`.
+- `missing`: candidate names not found on `PATH`.
+- `selection_guidance`: instruction for the host agent to ask the user which discovered CLI(s) to use unless the task names one.
+
+Default scan candidates are intentionally broad and non-authoritative: `codex`, `claude`, `cursor`, `gemini`, `opencode`, `aider`, `goose`, `qwen`, and `amp`. Add extra names with repeated `--candidate <name>` flags when a user has a different CLI installed.
+
+When multiple CLIs are found, present a compact choice to the user with name, version when available, and relevant inferred capabilities. Do not assume that the highest-profile CLI is the right one for the task.

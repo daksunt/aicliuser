@@ -1,4 +1,4 @@
 interface:
   display_name: "Delegate CLI"
-  short_description: "Discover and delegate work to external agent CLIs."
-  default_prompt: "Use external agent CLIs to discover capabilities, delegate bounded work, and review diffs."
+  short_description: "Discover, choose, and delegate work to model-powered CLIs."
+  default_prompt: "Discover available agent CLIs, ask which to use when needed, then delegate bounded work or review with transcripts and verification."

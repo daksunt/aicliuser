@@ -1,34 +1,39 @@
 ---
 name: delegate-cli
-description: Discover, evaluate, and delegate work to any installed external agent CLI. Use when Codex should outsource bounded implementation, research, debugging, stuck-task escalation, or independent code/PR review to tools such as another Codex CLI, Cursor CLI, Claude Code CLI, or any future CLI discovered at runtime.
+description: Discover, evaluate, select, and delegate work to any installed model-powered or agentic CLI. Use when the host agent, whether Codex or another LLM assistant, should find available CLIs, ask the user which discovered tools to use, outsource bounded implementation/research/debugging, escalate stuck tasks, or request independent code/PR review.
 ---
 
 # Delegate CLI
 
-Use external agent CLIs as high-autonomy collaborators while keeping Codex responsible for command choice, safety, diff review, and final verification. Treat every external CLI as discoverable at runtime; do not assume vendor-specific flags until you have inspected the installed command.
+Use model-powered CLIs as high-autonomy collaborators while keeping the host agent responsible for command choice, safety, diff review, and final verification. The host can be Codex or any other LLM assistant capable of running local commands. Treat every external CLI as discoverable at runtime; do not assume vendor-specific flags until you have inspected the installed command.
 
 ## Core Workflow
 
 1. Define the delegation goal in one sentence: implementation, review, research, debugging, or stuck-task escalation.
-2. Discover the CLI before using it:
-   - Prefer `scripts/discover_cli.py <name>`.
-   - If the script is unavailable, run `command -v <name>`, `<name> --version`, and `<name> --help` manually.
-   - Read `references/capability-report.md` when interpreting a discovery report.
-3. Capture pre-run repo state with `scripts/snapshot_status.py . --output /tmp/<task>-before.json` or equivalent `git status --short` and `git diff --stat` commands.
-4. Prepare a bounded prompt using `references/delegation-prompts.md`:
+2. Discover available CLIs before using them:
+   - If the user names a CLI, prefer `scripts/discover_cli.py <name>`.
+   - If the user asks what is available or does not name a CLI, run `scripts/discover_cli.py --scan` to scan common model/agent CLI names.
+   - If the script is unavailable, run `command -v <name>`, `<name> --version`, and `<name> --help` manually for likely candidates.
+   - Read `references/capability-report.md` when interpreting a discovery or scan report.
+3. Choose CLIs deliberately:
+   - If the task names a specific CLI, use that CLI if discovery succeeds.
+   - If multiple CLIs are discovered and the task does not name one, briefly present the found options and ask the user which one(s) to use.
+   - If only one suitable CLI is discovered, use it unless the task is sensitive or expensive.
+4. Capture pre-run repo state with `scripts/snapshot_status.py . --output /tmp/<task>-before.json` or equivalent `git status --short` and `git diff --stat` commands.
+5. Prepare a bounded prompt using `references/delegation-prompts.md`:
    - State the task, repo path, allowed scope, expected output, and time budget.
    - State whether direct edits are allowed. Default: direct edits are allowed unless the user or repo rules say otherwise.
    - Instruct the delegated CLI not to run destructive commands, expose secrets, install global tools, or rewrite unrelated files.
-5. Run the delegated command with transcript capture:
+6. Run the delegated command with transcript capture:
    - Prefer `scripts/run_delegation.py --cwd . --transcript /tmp/<task>.json --timeout <seconds> -- <cli> <args...>`.
    - If the CLI is interactive-only, use the platform's normal interactive command tool and summarize the transcript manually.
-6. Capture post-run repo state with `scripts/snapshot_status.py . --output /tmp/<task>-after.json`.
-7. Inspect all changes before trusting the result:
+7. Capture post-run repo state with `scripts/snapshot_status.py . --output /tmp/<task>-after.json`.
+8. Inspect all changes before trusting the result:
    - Run `git status --short`.
    - Review `git diff` for modified tracked files.
    - Check for unexpected generated files, credential leakage, or unrelated rewrites.
-8. Verify with the repo's normal tests, builds, linters, or focused commands. If no automated verification exists, perform the smallest meaningful manual/static check and say so.
-9. Report the delegated CLI used, the prompt intent, files changed, verification results, and any rejected suggestions.
+9. Verify with the repo's normal tests, builds, linters, or focused commands. If no automated verification exists, perform the smallest meaningful manual/static check and say so.
+10. Report the delegated CLI used, the prompt intent, files changed, verification results, and any rejected suggestions.
 
 ## Delegation Policy
 
@@ -40,11 +45,12 @@ Direct working-tree edits are allowed by default. Because another CLI may edit t
 
 Never delegate secrets, credentials, private tokens, or broad filesystem authority. Do not ask external CLIs to run destructive commands, reset branches, delete data, modify production services, or install global packages without explicit user approval.
 
-Treat all delegated output as untrusted until verified. External CLIs may hallucinate, miss repo conventions, or claim tests passed without evidence. Codex remains accountable for the final answer.
+Treat all delegated output as untrusted until verified. External CLIs may hallucinate, miss repo conventions, or claim tests passed without evidence. The host agent remains accountable for the final answer.
 
 ## Helper Scripts
 
-- `scripts/discover_cli.py <name> [--output report.json]`: locate a CLI, capture version/help output, and infer simple capabilities from help text.
+- `scripts/discover_cli.py <name> [--output report.json]`: locate one CLI, capture version/help output, and infer simple capabilities from help text.
+- `scripts/discover_cli.py --scan [--candidate name]... [--output report.json]`: scan common or provided model/agent CLI names and return found/missing candidates plus user-selection guidance.
 - `scripts/run_delegation.py --cwd . --transcript transcript.json --timeout 900 -- <command...>`: run a bounded command and write stdout, stderr, exit code, timeout state, and duration to JSON.
 - `scripts/snapshot_status.py [repo] [--output status.json]`: capture branch, `git status --short`, and `git diff --stat`.
 

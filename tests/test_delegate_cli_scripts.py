@@ -79,6 +79,33 @@ class DelegateCliScriptTests(unittest.TestCase):
             },
         )
 
+    def test_scan_candidates_reports_found_and_missing_clis(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            bin_dir = tmp_path / "bin"
+            bin_dir.mkdir()
+            make_executable(
+                bin_dir / "alpha",
+                "#!/usr/bin/env python3\n"
+                "import sys\n"
+                "if '--version' in sys.argv:\n"
+                "    print('alpha 0.1')\n"
+                "elif '--help' in sys.argv:\n"
+                "    print('Usage: alpha exec --prompt TEXT')\n",
+            )
+            old_path = os.environ.get("PATH", "")
+            os.environ["PATH"] = f"{bin_dir}{os.pathsep}{old_path}"
+            try:
+                discover_cli = load_script("discover_cli.py")
+                report = discover_cli.scan_candidates(["alpha", "missing-cli"], timeout_seconds=2)
+            finally:
+                os.environ["PATH"] = old_path
+
+        self.assertEqual([item["name"] for item in report["candidates"]], ["alpha", "missing-cli"])
+        self.assertEqual([item["name"] for item in report["found"]], ["alpha"])
+        self.assertEqual([item["name"] for item in report["missing"]], ["missing-cli"])
+        self.assertEqual(report["selection_guidance"], "Ask the user which discovered CLI(s) to use before delegating unless the task names a specific CLI.")
+
     def test_run_delegation_captures_transcript_and_exit_code(self):
         with tempfile.TemporaryDirectory() as tmp:
             tmp_path = Path(tmp)

@@ -8,6 +8,19 @@ import subprocess
 from typing import Any
 
 
+DEFAULT_CANDIDATES = (
+    "codex",
+    "claude",
+    "cursor",
+    "gemini",
+    "opencode",
+    "aider",
+    "goose",
+    "qwen",
+    "amp",
+)
+
+
 def _capture(command: list[str], timeout_seconds: float = 10) -> dict[str, Any]:
     try:
         completed = subprocess.run(
@@ -69,20 +82,41 @@ def discover(name: str, timeout_seconds: float = 10) -> dict[str, Any]:
     }
 
 
+def scan_candidates(names: list[str] | tuple[str, ...] = DEFAULT_CANDIDATES, timeout_seconds: float = 10) -> dict[str, Any]:
+    candidates = [discover(name, timeout_seconds=timeout_seconds) for name in names]
+    found = [candidate for candidate in candidates if candidate["found"]]
+    missing = [candidate for candidate in candidates if not candidate["found"]]
+    return {
+        "candidates": candidates,
+        "found": found,
+        "missing": missing,
+        "selection_guidance": "Ask the user which discovered CLI(s) to use before delegating unless the task names a specific CLI.",
+    }
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Discover an installed CLI and emit a JSON capability report.")
-    parser.add_argument("name", help="CLI command name to discover")
+    parser = argparse.ArgumentParser(description="Discover installed model/agent CLIs and emit JSON capability reports.")
+    parser.add_argument("name", nargs="?", help="CLI command name to discover")
+    parser.add_argument("--scan", action="store_true", help="Scan common model/agent CLI names and report found candidates")
+    parser.add_argument("--candidate", action="append", dest="candidates", help="Candidate CLI name to include with --scan; repeatable")
     parser.add_argument("--timeout", type=float, default=10, help="Seconds to allow for each probe")
     parser.add_argument("--output", help="Optional path to write the JSON report")
     args = parser.parse_args()
 
-    report = discover(args.name, timeout_seconds=args.timeout)
+    if args.scan:
+        report = scan_candidates(tuple(args.candidates or DEFAULT_CANDIDATES), timeout_seconds=args.timeout)
+    else:
+        if not args.name:
+            parser.error("provide a CLI name or use --scan")
+        report = discover(args.name, timeout_seconds=args.timeout)
     rendered = json.dumps(report, indent=2, sort_keys=True)
     if args.output:
         from pathlib import Path
 
         Path(args.output).write_text(rendered + "\n", encoding="utf-8")
     print(rendered)
+    if args.scan:
+        return 0 if report["found"] else 1
     return 0 if report["found"] else 1
 
 
