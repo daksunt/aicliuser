@@ -104,7 +104,7 @@ class DelegateCliScriptTests(unittest.TestCase):
         self.assertEqual([item["name"] for item in report["candidates"]], ["alpha", "missing-cli"])
         self.assertEqual([item["name"] for item in report["found"]], ["alpha"])
         self.assertEqual([item["name"] for item in report["missing"]], ["missing-cli"])
-        self.assertEqual(report["selection_guidance"], "Ask the user which discovered CLI(s) to use before delegating unless the task names a specific CLI.")
+        self.assertEqual(report["selection_guidance"], "Present discovered CLI options and require the user to select which CLI(s) to use before delegating, unless the request already names the CLI.")
 
     def test_default_candidates_include_cursor_agent_executable(self):
         discover_cli = load_script("discover_cli.py")

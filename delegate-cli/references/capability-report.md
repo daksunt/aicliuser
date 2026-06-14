@@ -2,7 +2,7 @@
 
 `discover_cli.py <name>` emits a JSON object with these fields:
 
-- `name`: command name requested by Codex.
+- `name`: command name requested by the host agent.
 - `found`: whether the command exists on `PATH`.
 - `path`: resolved executable path, or `null` when missing.
 - `version`: captured result for `<cli> --version`, including command, exit code, stdout, stderr, and timeout state.
@@ -30,8 +30,8 @@ If the help output is ambiguous, summarize the uncertainty and choose the safest
 - `candidates`: discovery reports for every candidate name checked.
 - `found`: discovered CLIs available on `PATH`.
 - `missing`: candidate names not found on `PATH`.
-- `selection_guidance`: instruction for the host agent to ask the user which discovered CLI(s) to use unless the task names one.
+- `selection_guidance`: instruction for the host agent to present discovered options and require user selection unless the request already names a CLI.
 
 Default scan candidates are intentionally broad and non-authoritative: `codex`, `claude`, `cursor`, `agent`, `gemini`, `opencode`, `aider`, `goose`, `qwen`, and `amp`. Cursor Agent may be installed as `agent` even when `cursor --help` reports only IDE setup guidance. Add extra names with repeated `--candidate <name>` flags when a user has a different CLI installed.
 
-When multiple CLIs are found, present a compact choice to the user with name, version when available, and relevant inferred capabilities. Do not assume that the highest-profile CLI is the right one for the task.
+When one or more CLIs are found and the request does not already name a CLI, present a compact choice to the user with name, version when available, and relevant inferred capabilities. Do not assume that the highest-profile CLI is the right one for the task.

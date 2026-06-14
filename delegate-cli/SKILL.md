@@ -1,6 +1,6 @@
 ---
 name: delegate-cli
-description: Discover, evaluate, select, and delegate work to any installed model-powered or agentic CLI. Use when the host agent, whether Codex or another LLM assistant, should find available CLIs, ask the user which discovered tools to use, outsource bounded implementation/research/debugging, escalate stuck tasks, or request independent code/PR review.
+description: Discover, evaluate, select, and delegate work to any installed model-powered or agentic CLI. Use when the host agent, whether Codex or another LLM assistant, should find available CLIs, require the user to select which discovered tools to use, outsource bounded implementation/research/debugging, escalate stuck tasks, or request independent code/PR review.
 ---
 
 # Delegate CLI
@@ -17,8 +17,8 @@ Use model-powered CLIs as high-autonomy collaborators while keeping the host age
    - Read `references/capability-report.md` when interpreting a discovery or scan report.
 3. Choose CLIs deliberately:
    - If the task names a specific CLI, use that CLI if discovery succeeds.
-   - If multiple CLIs are discovered and the task does not name one, briefly present the found options and ask the user which one(s) to use.
-   - If only one suitable CLI is discovered, use it unless the task is sensitive or expensive.
+   - If the task does not name a CLI, present the found options and require the user to choose which CLI(s) to use before delegating.
+   - If only one suitable CLI is discovered, tell the user it is the only discovered option and ask for confirmation before external delegation.
 4. Capture pre-run repo state with `scripts/snapshot_status.py . --output /tmp/<task>-before.json` or equivalent `git status --short` and `git diff --stat` commands.
 5. Prepare a bounded prompt using `references/delegation-prompts.md`:
    - State the task, repo path, allowed scope, expected output, and time budget.
@@ -37,7 +37,7 @@ Use model-powered CLIs as high-autonomy collaborators while keeping the host age
 
 ## Delegation Policy
 
-Use delegation when it will improve quality or speed: independent review, parallel implementation, unfamiliar tooling, a second opinion on architecture, or a task where Codex is stuck.
+Use delegation when it will improve quality or speed: independent review, parallel implementation, unfamiliar tooling, a second opinion on architecture, or a task where the host agent is stuck. After discovery, the user selects which CLI or CLIs participate unless they already named the tool.
 
 Keep the task bounded. Delegate one clear objective at a time, not open-ended ownership of the whole repo. For larger work, split into separate runs such as "review this diff", "propose a fix", then "implement only the failing test".
 
@@ -46,6 +46,12 @@ Direct working-tree edits are allowed by default. Because another CLI may edit t
 Never delegate secrets, credentials, private tokens, or broad filesystem authority. Do not ask external CLIs to run destructive commands, reset branches, delete data, modify production services, or install global packages without explicit user approval.
 
 Treat all delegated output as untrusted until verified. External CLIs may hallucinate, miss repo conventions, or claim tests passed without evidence. The host agent remains accountable for the final answer.
+
+## Permission Model
+
+Use the least surprising permission level for each delegation. Local discovery of `PATH`, `--version`, and `--help` is usually safe. Local helper scripts or tests may require sandbox approval in restricted environments. External delegation to cloud-backed CLIs may disclose repository content to a third party, so ask for explicit user approval unless the user already opted in. Direct edits require pre/post snapshots and diff review. Destructive commands, credentials, production access, resets, deletes, deploys, or broad filesystem authority require explicit approval.
+
+If the host environment blocks a helper script, run equivalent manual commands and preserve the same evidence trail.
 
 ## Helper Scripts
 
@@ -70,4 +76,4 @@ After receiving review output:
 
 ## Stuck-Task Escalation
 
-When Codex is blocked, use another CLI as a diagnostic peer. Share the exact error, command output, relevant files, and what has already been tried. Ask for hypotheses and verification steps before asking for edits. If the peer proposes a fix, apply the normal pre/post snapshot and diff-review workflow.
+When the host agent is blocked, use another CLI as a diagnostic peer. Share the exact error, command output, relevant files, and what has already been tried. Ask for hypotheses and verification steps before asking for edits. If the peer proposes a fix, apply the normal pre/post snapshot and diff-review workflow.

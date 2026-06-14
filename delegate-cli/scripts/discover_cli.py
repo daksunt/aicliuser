@@ -91,7 +91,7 @@ def scan_candidates(names: list[str] | tuple[str, ...] = DEFAULT_CANDIDATES, tim
         "candidates": candidates,
         "found": found,
         "missing": missing,
-        "selection_guidance": "Ask the user which discovered CLI(s) to use before delegating unless the task names a specific CLI.",
+        "selection_guidance": "Present discovered CLI options and require the user to select which CLI(s) to use before delegating, unless the request already names the CLI.",
     }
 
 
